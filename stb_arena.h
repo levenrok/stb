@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef ARENA_DEFAULT_ALIGNMENT
-#define ARENA_DEFAULT_ALIGNMENT (2 * sizeof(void*))
+#ifndef STB_ARENA_DEFAULT_ALIGNMENT
+#define STB_ARENA_DEFAULT_ALIGNMENT (2 * sizeof(void*))
 #endif
 
 typedef struct {
@@ -36,7 +36,7 @@ extern "C" {
  * @param size Total size of the arena to create
  * @return Initialized arena
  */
-Arena init_arena(size_t size);
+Arena stb_arena_init(size_t size);
 
 /**
  * @brief Allocates a block of memory from the arena with a specific alignment.
@@ -46,7 +46,7 @@ Arena init_arena(size_t size);
  * @param alignment Alignment of the data type
  * @return Pointer to the pushed block
  */
-void* push_arena_aligned(Arena* arena, size_t size, Alignment alignment);
+void* stb_arena_push_aligned(Arena* arena, size_t size, Alignment alignment);
 
 /**
  * @def push_arena(arena, size)
@@ -56,8 +56,8 @@ void* push_arena_aligned(Arena* arena, size_t size, Alignment alignment);
  * @param Size of the allocating block
  * @return Pointer to the pushed block
  */
-#define push_arena(arena, size) \
-    push_arena_aligned(arena, size, ARENA_DEFAULT_ALIGNMENT)
+#define stb_arena_push(arena, size) \
+    stb_arena_push_aligned(arena, size, STB_ARENA_DEFAULT_ALIGNMENT)
 
 /**
  * @brief Returns the current offset of the arena, which can be used as a mark
@@ -66,7 +66,7 @@ void* push_arena_aligned(Arena* arena, size_t size, Alignment alignment);
  * @param arena Reference to a initialized arena
  * @return Mark of the recently pushed block
  */
-ArenaMark get_arena_mark(Arena* arena);
+ArenaMark stb_arena_get_mark(Arena* arena);
 
 /**
  * @brief Resets the arena's offset to a previously obtained mark, effectively
@@ -75,7 +75,7 @@ ArenaMark get_arena_mark(Arena* arena);
  * @param arena Reference to a initialized arena
  * @param mark Mark of the pushed block to reset to
  */
-void reset_to_arena_mark(Arena* arena, ArenaMark mark);
+void stb_arena_reset_to_mark(Arena* arena, ArenaMark mark);
 
 /**
  * @brief Pops the last allocation.
@@ -85,21 +85,21 @@ void reset_to_arena_mark(Arena* arena, ArenaMark mark);
  *
  * @param arena Reference to a initialized arena
  */
-void pop_arena(Arena* arena);
+void stb_arena_pop(Arena* arena);
 
 /**
  * @brief Resets the arena, making all its memory available for new allocations.
  *
  * @param arena Reference to a initialized arena
  */
-void reset_arena(Arena* arena);
+void stb_arena_reset(Arena* arena);
 
 /**
  * @brief Frees the memory block of the arena.
  *
  * @param arena Reference to a initialized arena
  */
-void free_arena(Arena* arena);
+void stb_arena_free(Arena* arena);
 
 #ifdef __cplusplus
 }
@@ -112,7 +112,7 @@ void free_arena(Arena* arena);
 #include <assert.h>
 #include <stdlib.h>
 
-Arena init_arena(size_t size) {
+Arena stb_arena_init(size_t size) {
     unsigned char* buffer = (unsigned char*)malloc(size);
 
     if (buffer) {
@@ -133,7 +133,7 @@ static inline uintptr_t align_forward(uintptr_t ptr, size_t alignment) {
     return (ptr + alignment - 1) & ~(alignment - 1);
 }
 
-void* push_arena_aligned(Arena* arena, size_t size, Alignment alignment) {
+void* stb_arena_push_aligned(Arena* arena, size_t size, Alignment alignment) {
     uintptr_t current_ptr = (uintptr_t)arena->buffer + arena->offset;
     uintptr_t aligned_ptr = align_forward(current_ptr, alignment);
 
@@ -149,26 +149,26 @@ void* push_arena_aligned(Arena* arena, size_t size, Alignment alignment) {
     return (void*)aligned_ptr;
 }
 
-ArenaMark get_arena_mark(Arena* arena) {
+ArenaMark stb_arena_get_mark(Arena* arena) {
     return arena->offset;
 }
 
-void reset_to_arena_mark(Arena* arena, ArenaMark mark) {
+void stb_arena_reset_to_mark(Arena* arena, ArenaMark mark) {
     assert(mark <= arena->offset &&
            "cannot reset to a mark beyond the current offset.");
     arena->offset = mark;
 }
 
-void pop_arena(Arena* arena) {
-    reset_to_arena_mark(arena, arena->prev_offset);
+void stb_arena_pop(Arena* arena) {
+    stb_arena_reset_to_mark(arena, arena->prev_offset);
 }
 
-void reset_arena(Arena* arena) {
+void stb_arena_reset(Arena* arena) {
     arena->offset = 0;
     arena->prev_offset = 0;
 }
 
-void free_arena(Arena* arena) {
+void stb_arena_free(Arena* arena) {
     if (arena->buffer) {
         free(arena->buffer);
     }
